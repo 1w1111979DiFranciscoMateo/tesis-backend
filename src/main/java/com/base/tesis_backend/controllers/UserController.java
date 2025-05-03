@@ -3,6 +3,7 @@ package com.base.tesis_backend.controllers;
 import com.base.tesis_backend.Dtos.UserLoginDTO;
 import com.base.tesis_backend.Dtos.UserLoginResponseDTO;
 import com.base.tesis_backend.Dtos.UserRegisterDTO;
+import com.base.tesis_backend.config.JwtUtil;
 import com.base.tesis_backend.entities.Category;
 import com.base.tesis_backend.entities.Platform;
 import com.base.tesis_backend.entities.User;
@@ -28,6 +29,8 @@ public class UserController {
     private UserCategoryService userCategoryService;
     @Autowired
     private UserPlatformService userPlatformService;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     //endpoint para registrar un nuevo usuario
     @PostMapping("/add")
@@ -99,19 +102,21 @@ public class UserController {
                 User user = userOptional.get();
                 //comparamos contraseñas del usuario que existe con el usuario recibido
                 if (user.getPassword().equals(userLogin.getPassword())){
+                    //generamos el token JWT usando el email del usuario
+                    String jwtToken = jwtUtil.generateToken(user.getEmail());
                     //login exitoso, datos correctos
-                    return ResponseEntity.ok(new UserLoginResponseDTO("Login Exitoso"));
+                    return ResponseEntity.ok(new UserLoginResponseDTO("Login Exitoso", jwtToken));
                 } else {
                     //le erro de contraseña
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new UserLoginResponseDTO("Contraseña Incorrecta"));
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new UserLoginResponseDTO("Contraseña Incorrecta", null));
                 }
             } else {
                 //no existe el usuario
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new UserLoginResponseDTO("Email no encontrado"));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new UserLoginResponseDTO("Email no encontrado", null));
             }
         } catch (Exception ex) {
             ex.printStackTrace(); //se imprime el error en consola
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new UserLoginResponseDTO("Error en el servidor: " + ex.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new UserLoginResponseDTO("Error en el servidor: " + ex.getMessage(), null));
         }
     }
 }
