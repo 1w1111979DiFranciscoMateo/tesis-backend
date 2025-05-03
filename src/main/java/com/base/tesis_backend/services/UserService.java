@@ -15,6 +15,8 @@ public class UserService {
 
     //metodo para encontrar un usuario por Email
     public Optional<User> findByEmail(String email) {
+        //temporal
+        System.out.println(("Email recibido en el servicio: " + email));
         return userRepository.findByEmail(email);
     }
 
