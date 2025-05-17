@@ -3,6 +3,7 @@ package com.base.tesis_backend.controllers;
 import com.base.tesis_backend.Dtos.UserLoginDTO;
 import com.base.tesis_backend.Dtos.UserLoginResponseDTO;
 import com.base.tesis_backend.Dtos.UserRegisterDTO;
+import com.base.tesis_backend.Dtos.UserRegisterResponseDTO;
 import com.base.tesis_backend.config.JwtUtil;
 import com.base.tesis_backend.entities.Category;
 import com.base.tesis_backend.entities.Platform;
@@ -33,8 +34,8 @@ public class UserController {
     private JwtUtil jwtUtil;
 
     //endpoint para registrar un nuevo usuario
-    @PostMapping("/add")
-    public ResponseEntity<User> addUser(@RequestBody UserRegisterDTO dto) {
+    @PostMapping("/register")
+    public ResponseEntity<UserRegisterResponseDTO> addUser(@RequestBody UserRegisterDTO dto) {
         try {
             //intentamos buscar el usuario ingresado por su email
             Optional<User> exist = userService.findByEmail(dto.email);
@@ -66,8 +67,14 @@ public class UserController {
                 userPlatformService.addUserPlatform(savedUser, platform);
             }
 
-            //devolvemos un ok basicamente y el savedUser
-            return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
+            //Creamos un JWT para el nuevo usuario
+            String jwtToken = jwtUtil.generateToken(savedUser.getEmail());
+
+            //Creo un objeto responseDTO de tipo UserRegisterResponseDTO para devolverlo al front
+            UserRegisterResponseDTO responseDTO = new UserRegisterResponseDTO(jwtToken, savedUser.getUsername(), savedUser.getEmail());
+
+            //devolvemos el jwt token, el username y email del usuario registrado
+            return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
 
         } catch (Exception ex) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

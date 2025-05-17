@@ -2,8 +2,16 @@ package com.base.tesis_backend.repositories;
 
 import com.base.tesis_backend.entities.UserPlatform;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public interface UserPlatformRepository extends JpaRepository<UserPlatform, Long> {
+    //esto es un metodo para encontrar los ids de las plataformas que un usuario tiene
+    //como disponibles
+    @Query("SELECT up.platform.id FROM UserPlatform up WHERE up.user.id = :userId")
+    List<Long> findPlatformIdsByUserId(@Param("userId") Long userId);
 }

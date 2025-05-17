@@ -7,6 +7,8 @@ import com.base.tesis_backend.repositories.UserCategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 //Esto es un Service, aca va la logica de la aplicacion (especificamente la
 // logica de userCategory)
 @Service
@@ -20,5 +22,11 @@ public class UserCategoryService {
         userCategory.setUser(user);
         userCategory.setCategory(category);
         userCategoryRepository.save(userCategory);
+    }
+
+    //esto es para usar el metodo del repository para encontrar los ids
+    //de las categorias que un usuario tiene como favoritas
+    public List<Long> findCategoryIdsByUserIds(Long userId){
+        return userCategoryRepository.findCategoryIdsByUserId(userId);
     }
 }

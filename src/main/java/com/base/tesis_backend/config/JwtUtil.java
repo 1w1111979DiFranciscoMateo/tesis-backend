@@ -9,8 +9,10 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 
-//Esto es una clase para generar los tokens JWT, validar los tokens JWT recibidos y
-//obtener el email desde el token.
+//Esto es una clase para:
+//Generar los tokens JWT
+//Validar los tokens JWT recibido
+//Obtener el email desde el token.
 @Component
 public class JwtUtil {
     private static final String SECRET_KEY = "clave-super-secreta-para-el-jwt-que-debe-ser-muy-larga";
@@ -38,7 +40,7 @@ public class JwtUtil {
         return Jwts.parser()
                 .setSigningKey(getSigningKey())
                 .build()
-                .parseClaimsJwt(token)
+                .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
     }
@@ -49,7 +51,7 @@ public class JwtUtil {
             Jwts.parser()
                     .setSigningKey(getSigningKey())
                     .build()
-                    .parseClaimsJwt(token);
+                    .parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;

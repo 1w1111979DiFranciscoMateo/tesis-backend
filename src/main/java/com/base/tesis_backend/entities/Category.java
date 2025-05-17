@@ -8,8 +8,8 @@ import lombok.Data;
 @Table(name = "categories")
 public class Category {
 
+    //el id biene de TMDB, por eso no es GeneratedValue
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;

@@ -7,6 +7,8 @@ import com.base.tesis_backend.repositories.UserPlatformRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserPlatformService {
     @Autowired
@@ -18,5 +20,11 @@ public class UserPlatformService {
         userPlatform.setUser(user);
         userPlatform.setPlatform(platform);
         userPlatformRepository.save(userPlatform);
+    }
+
+    //esto es para usar el metodo del repository para encontrar los ids
+    //de las plataformas que un usuario tiene como disponibles.
+    public List<Long> findPlatformIdsByUserIds(Long userId){
+        return userPlatformRepository.findPlatformIdsByUserId(userId);
     }
 }

@@ -8,9 +8,12 @@ import lombok.Data;
 @Table(name = "platforms")
 public class Platform {
 
+    //el id biene de TMDB, por eso no es GeneratedValue
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
+
+    //la url del logo de la plataforma (para el front)
+    private String logoPath;
 }
