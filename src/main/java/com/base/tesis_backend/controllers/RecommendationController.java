@@ -22,31 +22,17 @@ public class RecommendationController {
     private final JwtUtil jwtUtil;
 
     //devolvemos las recomendaciones de un usuario en especifico
-    @GetMapping("/getPage1")
+    @GetMapping("/getPage")
     public ResponseEntity<List<RecommendationDTO>> getRecommendations(
-            // @RequestHeader("Authorization") String authHeader,
             @RequestParam(name = "filterByPlatforms", defaultValue = "false") boolean filterByPlataforms,
-                Authentication authentication) {
-
-        // extraemos el token del header ("Bearer ...")
-        // validamos que el header no este vacio y que tenga el "Bearer "
-        // if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-        //    return ResponseEntity.status(401).build();
-        // }
-
-        // le quitamos el "Bearer " al token
-        // String token = authHeader.substring(7);
-
-        //Validamos el token
-        // if (!jwtUtil.isTokenValid(token)) {
-        //     return ResponseEntity.status(401).build();
-        // }
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            Authentication authentication) {
 
         //Extraemos el email del token
         String email = authentication.getName();
 
         //LLamamos al servicio y devolvemos las recomendaciones
-        List<RecommendationDTO> recommendations = recommendationService.getRecommendationsForUser(email, filterByPlataforms);
+        List<RecommendationDTO> recommendations = recommendationService.getRecommendationsForUser(email, filterByPlataforms, page);
         return ResponseEntity.ok(recommendations);
     }
 }

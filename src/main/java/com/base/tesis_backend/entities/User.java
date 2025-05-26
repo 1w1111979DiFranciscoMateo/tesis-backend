@@ -30,6 +30,10 @@ public class User implements UserDetails {
 
     private LocalDateTime creationDate;
 
+    public String getRealUsername(){
+        return username;
+    }
+
     //Metodos requeridos por UserDetails para el tema de la seguirdad con JWT
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

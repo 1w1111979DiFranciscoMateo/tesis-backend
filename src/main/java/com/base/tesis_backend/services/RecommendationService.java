@@ -11,10 +11,13 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,7 +39,7 @@ public class RecommendationService {
     @Value("${tmdb.api.token}")
     private String tmdbReadAccesToken;
 
-    public List<RecommendationDTO> getRecommendationsForUser(String email, boolean filterByPlatforms){
+    public List<RecommendationDTO> getRecommendationsForUser(String email, boolean filterByPlatforms, int page){
         //Buscamos el usuario por email
         User user = userService.findByEmail(email).orElseThrow(() -> new RuntimeException("User not Found"));
 
@@ -47,19 +50,47 @@ public class RecommendationService {
         //si el filterByPlatforms es false devolvemos la List vacia.
         List<Long> platformsIds = filterByPlatforms ? userPlatformService.findPlatformIdsByUserIds(user.getId()) : Collections.emptyList();
 
-        //armamos la URL de la request a TMDB
-        String url = buildTmdbUrl(categoryIds, platformsIds);
+        //armamos las URL de las requests a TMDB
+        String movieUrl = buildTmdbUrl("movie", categoryIds, platformsIds, page);
+        String tvUrl = buildTmdbUrl("tv", categoryIds, platformsIds, page);
 
-        //llamamos a TMDB
-        ResponseEntity<String> response = restTemplate.exchange(
-                url,
+        //temporal
+        System.out.println("URL Peliculas: " + movieUrl);
+        System.out.println("URL Series: " + tvUrl);
+
+        //llamamos a TMDB para Peliculas
+        ResponseEntity<String> movieResponse = restTemplate.exchange(
+                movieUrl,
                 HttpMethod.GET,
                 getEntityWithHeaders(),
                 String.class
         );
 
-        //Parseamos la respuesta a DTOs
-        return parseRecommendationsFromJson(response.getBody());
+        //Llamamos a TMDB para Series
+        ResponseEntity<String> tvResponse = restTemplate.exchange(
+                tvUrl,
+                HttpMethod.GET,
+                getEntityWithHeaders(),
+                String.class
+        );
+
+        //Parseamos la respuesta de Peliculas a DTOs
+        List<RecommendationDTO> movies = parseRecommendationsFromJson(movieResponse.getBody(), "movie");
+
+        //Parseamos la respuesta de Series a DTOs
+        List<RecommendationDTO> tvShows = parseRecommendationsFromJson(tvResponse.getBody(), "tv");
+
+        //Combinamos ambos resultados
+        List<RecommendationDTO> allRecommendations = new ArrayList<>();
+        allRecommendations.addAll(movies);
+        allRecommendations.addAll(tvShows);
+
+        //ordenamos la lista de allRecommendations por rating
+        allRecommendations.sort(Comparator.comparing(RecommendationDTO::getRating, Comparator.nullsLast(Comparator.reverseOrder())));
+
+        //Devulvemos un array de RecommendationDTO con todas las recomendaciones
+        //tanto de peliculas como de tvShows
+        return allRecommendations;
     }
 
     //este metodo es para armar el Header de las request a TMDB
@@ -71,8 +102,8 @@ public class RecommendationService {
     }
 
     //metodo para armar el url para la consulta a TMDB
-    private String buildTmdbUrl(List<Long> categoryIds, List<Long> platformIds) {
-        StringBuilder url = new StringBuilder("https://api.themoviedb.org/3/discover/movie?");
+    private String buildTmdbUrl(String type, List<Long> categoryIds, List<Long> platformIds, int page) {
+        StringBuilder url = new StringBuilder("https://api.themoviedb.org/3/discover/" + type + "?");
 
         url.append("language=es-AR"); //lenguaje español argentina
         url.append("&region=AR"); //region argentina
@@ -80,7 +111,7 @@ public class RecommendationService {
         url.append("&include_video=false"); //no incuya video
         url.append("&sort_by=vote_average.desc"); //ordenado por rating descendiente
         url.append("&vote_count.gte=1000"); //que el contenido tenga mas de 1000 votos
-        url.append("&page=1"); //pagina 1 (mas adelante cambiar esto para el tema del paginado)
+        url.append("&page=" + page); //pagina
         url.append("&watch_region=AR");//region argentina
 
         //agregar las categorias favoritas del usuario al url
@@ -97,7 +128,7 @@ public class RecommendationService {
             String providers = platformIds.stream()
                     .map(String::valueOf)
                     .collect(Collectors.joining("|")); //OR
-            url.append("&with_providers=").append(providers);
+            url.append("&with_watch_providers=").append(providers);
         }
 
         //devuelvo el url
@@ -110,7 +141,7 @@ public class RecommendationService {
     //este metodo es para recibir los datos de la api de TMDB en formato JSON
     //y los voy pasando a un objecto tipo RecommendationDTO a cada
     //contenido audiovisual para luego devolver una List de RecommendationDTO
-    private List<RecommendationDTO> parseRecommendationsFromJson(String json){
+    private List<RecommendationDTO> parseRecommendationsFromJson(String json, String type){
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode root = objectMapper.readTree(json);
@@ -130,7 +161,9 @@ public class RecommendationService {
             return nodes.stream()
                     .map(result -> {
                         Long id = result.has("id") ? result.get("id").asLong() : null;
-                        String title = result.has("title") ? result.get("title").asText() : "Sin Titulo";
+                        String title = result.has("title") ? result.get("title").asText()
+                                        : result.has("name") ? result.get("name").asText()
+                                        : "Sin titulo";
                         String posterPath = result.has("poster_path") && !result.get("poster_path").isNull()
                                 ? TMDB_IMAGE_BASE_URL + result.get("poster_path").asText()
                                 : null;
@@ -140,7 +173,7 @@ public class RecommendationService {
                                 : Collections.emptyList();
                         Double rating = result.has("vote_average") ? result.get("vote_average").asDouble() : null;
 
-                        return new RecommendationDTO(id, title, posterPath, genreIds, rating);
+                        return new RecommendationDTO(id, title, posterPath, genreIds, rating, type);
                     })
                     .collect(Collectors.toList());
 

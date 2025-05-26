@@ -35,7 +35,7 @@ public class JwtUtil {
     }
 
     //Obtenemos el email del token, con este metodo vamos a saber que usuario esta haciendo
-    //una peticion
+    //una peticion ACA HAGO EXTRACT DEL EMAIL NO DEL TOKEN
     public String extractToken(String token){
         return Jwts.parser()
                 .setSigningKey(getSigningKey())

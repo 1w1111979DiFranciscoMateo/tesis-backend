@@ -1,5 +1,6 @@
 package com.base.tesis_backend.repositories;
 
+import com.base.tesis_backend.entities.User;
 import com.base.tesis_backend.entities.UserPlatform;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,4 +15,10 @@ public interface UserPlatformRepository extends JpaRepository<UserPlatform, Long
     //como disponibles
     @Query("SELECT up.platform.id FROM UserPlatform up WHERE up.user.id = :userId")
     List<Long> findPlatformIdsByUserId(@Param("userId") Long userId);
+
+    //este metodo es para encontrar las plataformas de un usuario por usuario.
+    List<UserPlatform> findByUser(User user);
+
+    //este metodo es para eliminar las plataformas de un usuario (para el editar perfil)
+    void deleteByUser(User user);
 }

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 //Esto es un Service, aca va la logica de la aplicacion (especificamente la
 // logica de userCategory)
@@ -28,5 +29,30 @@ public class UserCategoryService {
     //de las categorias que un usuario tiene como favoritas
     public List<Long> findCategoryIdsByUserIds(Long userId){
         return userCategoryRepository.findCategoryIdsByUserId(userId);
+    }
+
+    //este metodo es para encontrar las categorias favoritas de un usuario y
+    //devolverlas con todos los datos.
+    public List<Category> getCategoriesByUser(User user) {
+        return userCategoryRepository.findByUser(user)
+                .stream()
+                .map(UserCategory::getCategory)
+                .collect(Collectors.toList());
+    }
+
+    //este metodo es para actualizar las categorias preferidas de un usuario
+    public void updateUserCategories(User user, List<Category> categories){
+        //Borro las categorias que tenia guardadas
+        userCategoryRepository.deleteByUser(user);
+
+        //Creo las nuevas relaciones
+        List<UserCategory> newAssociations = categories.stream()
+                .map(category -> {
+                    UserCategory uc = new UserCategory();
+                    uc.setUser(user);
+                    uc.setCategory(category);
+                    return uc;
+                }).toList();
+        userCategoryRepository.saveAll(newAssociations);
     }
 }

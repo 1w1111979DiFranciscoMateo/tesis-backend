@@ -15,4 +15,5 @@ public class RecommendationDTO {
     private String posterUrl;
     private List<Integer> categories;
     private Double rating;
+    private String type; //Esto es para definir si es una movie o tvShow
 }

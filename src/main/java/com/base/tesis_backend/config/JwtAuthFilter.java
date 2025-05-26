@@ -1,6 +1,5 @@
 package com.base.tesis_backend.config;
 
-import com.base.tesis_backend.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.FilterChain;
@@ -41,7 +40,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         final String authHeader = request.getHeader("Authorization");
-
         String userEmail = null;
         String jwtToken = null;
 

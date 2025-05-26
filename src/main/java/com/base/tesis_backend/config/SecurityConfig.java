@@ -15,7 +15,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
 
 //Esta clase se encarga de varias cosas =
@@ -48,7 +47,9 @@ public class SecurityConfig {
                                 "/platforms/getAll"
                         ).permitAll()
                         .requestMatchers( //url que si necesitan authentication
-                                "/recommendations/**"
+                                "/recommendations/**",
+                                "/users/profile",
+                                "/users/update"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

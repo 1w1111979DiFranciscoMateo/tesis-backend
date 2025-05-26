@@ -1,9 +1,6 @@
 package com.base.tesis_backend.controllers;
 
-import com.base.tesis_backend.Dtos.UserLoginDTO;
-import com.base.tesis_backend.Dtos.UserLoginResponseDTO;
-import com.base.tesis_backend.Dtos.UserRegisterDTO;
-import com.base.tesis_backend.Dtos.UserRegisterResponseDTO;
+import com.base.tesis_backend.Dtos.*;
 import com.base.tesis_backend.config.JwtUtil;
 import com.base.tesis_backend.entities.Category;
 import com.base.tesis_backend.entities.Platform;
@@ -11,11 +8,15 @@ import com.base.tesis_backend.entities.User;
 import com.base.tesis_backend.services.UserCategoryService;
 import com.base.tesis_backend.services.UserPlatformService;
 import com.base.tesis_backend.services.UserService;
+import io.swagger.v3.oas.models.responses.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 //Esto es un controller, aca se escuchan las llamadas a la api
@@ -125,5 +126,47 @@ public class UserController {
             ex.printStackTrace(); //se imprime el error en consola
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new UserLoginResponseDTO("Error en el servidor: " + ex.getMessage(), null));
         }
+    }
+
+    //endpoint para devolver todos los datos necesarios para armar la pantalla de
+    //"Mi Perfil" en el frontend
+    //Tambien uso este endpoint para cargar el formulario de "Modificar Perfil" con los
+    //datos existentes del usuario
+    @GetMapping("/profile")
+    public ResponseEntity<UserProfileDTO> getUserProfile(Authentication authentication) {
+        try {
+            //Obtenemos el email del usuario autenticado
+            //extraido del JWT por Spring Security
+            String email = authentication.getName();
+
+            //Logica del Servicio
+            UserProfileDTO profile = userService.getUserProfile(email);
+
+            return ResponseEntity.ok(profile);
+        } catch (NoSuchElementException e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    //endpoint para actualizar los datos de un usuario
+    @PutMapping("/update")
+    public ResponseEntity<Map<String, String>> updateUser(@RequestBody UpdateUserDTO dto, Authentication authentication){
+        //extraemos el email del JWT
+        String email = authentication.getName();
+
+        //TEMPORAL Imprimimos el contenido del dto para ver que recibo del front
+        //en las categorias y plataformas y publicProfile
+        System.out.println(dto.getUserCategories());
+        System.out.println(dto.getUserPlatforms());
+        System.out.println("PUBLIC PROFILE: " + dto.isPublicProfile());
+
+
+        //actualizamos el usuario
+        userService.updateUser(email, dto);
+
+        //devolvemos un ok
+        return ResponseEntity.ok(Map.of("message", "Usuario actualizado Correctamente"));
     }
 }
