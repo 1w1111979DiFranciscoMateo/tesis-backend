@@ -6,6 +6,7 @@ import com.base.tesis_backend.entities.Category;
 import com.base.tesis_backend.entities.Platform;
 import com.base.tesis_backend.entities.User;
 import com.base.tesis_backend.services.UserCategoryService;
+import com.base.tesis_backend.services.UserListService;
 import com.base.tesis_backend.services.UserPlatformService;
 import com.base.tesis_backend.services.UserService;
 import io.swagger.v3.oas.models.responses.ApiResponse;
@@ -33,6 +34,8 @@ public class UserController {
     private UserPlatformService userPlatformService;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private UserListService userListService;
 
     //endpoint para registrar un nuevo usuario
     @PostMapping("/register")
@@ -57,6 +60,9 @@ public class UserController {
 
             //Guardamos el usuario nuevo
             User savedUser = userService.addUser(user);
+
+            //generamos las listas por defecto del usuario
+            userListService.createDefaultLists(savedUser);
 
             //asociamos las categorias preferidas del usuario
             for (Category category : dto.userCategories){

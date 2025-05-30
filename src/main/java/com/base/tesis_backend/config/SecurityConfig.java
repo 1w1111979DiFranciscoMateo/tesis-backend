@@ -49,7 +49,8 @@ public class SecurityConfig {
                         .requestMatchers( //url que si necesitan authentication
                                 "/recommendations/**",
                                 "/users/profile",
-                                "/users/update"
+                                "/users/update",
+                                "/userLists/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )
