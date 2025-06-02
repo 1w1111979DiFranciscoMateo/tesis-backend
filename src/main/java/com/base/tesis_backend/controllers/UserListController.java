@@ -2,6 +2,7 @@ package com.base.tesis_backend.controllers;
 
 import com.base.tesis_backend.Dtos.UserListDTO;
 import com.base.tesis_backend.Dtos.UserListResponseDTO;
+import com.base.tesis_backend.Dtos.UserListWithContentsDTO;
 import com.base.tesis_backend.services.UserListService;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,17 @@ public class UserListController {
 
         boolean exists = userListService.listNameExistForUser(name, email);
         return ResponseEntity.ok(exists);
+    }
+
+    //endpoint para devolver al front todos los datos de la lista (incluyendo sus contenidos
+    // audiovisuales) de la lista solicitada por id.
+    @GetMapping("/get/{id}")
+    public ResponseEntity<UserListWithContentsDTO> getListDetail(@PathVariable Long id, Authentication authentication) {
+        //extraemos el email del token
+        String email = authentication.getName();
+
+        UserListWithContentsDTO dto = userListService.getUserListDetail(id, email);
+        return ResponseEntity.ok(dto);
     }
 
 }

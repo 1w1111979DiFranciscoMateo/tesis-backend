@@ -6,17 +6,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-//Este es un DTO para devolverle al frontend las listas del usuario logueado
-// (asi no le paso el objeto User user)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserListDTO {
+public class UserListWithContentsDTO {
     private Long id;
     private String name;
     private String description;
     @JsonProperty("isPublic")
     private boolean isPublic;
     private LocalDateTime creationDate;
+    private List<AudioVisualContentDTO> contents;
 }

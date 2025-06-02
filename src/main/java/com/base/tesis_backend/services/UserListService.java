@@ -1,9 +1,14 @@
 package com.base.tesis_backend.services;
 
+import com.base.tesis_backend.Dtos.AudioVisualContentDTO;
 import com.base.tesis_backend.Dtos.UserListDTO;
 import com.base.tesis_backend.Dtos.UserListResponseDTO;
+import com.base.tesis_backend.Dtos.UserListWithContentsDTO;
+import com.base.tesis_backend.entities.AudioVisualContent;
 import com.base.tesis_backend.entities.User;
 import com.base.tesis_backend.entities.UserList;
+import com.base.tesis_backend.entities.UserListContent;
+import com.base.tesis_backend.repositories.UserListContentRepository;
 import com.base.tesis_backend.repositories.UserListRepository;
 import com.base.tesis_backend.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,9 +29,10 @@ public class UserListService {
 
     @Autowired
     private UserListRepository userListRepository;
-
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private UserListContentRepository userListContentRepository;
 
     //metodo para generar las listas por defecto (Favoritos, Ver más tarde, Vistos)
     // cuando se registra un usuario nuevo
@@ -99,4 +106,38 @@ public class UserListService {
     public boolean listNameExistForUser(String name, String email) {
         return userListRepository.existsByNameIgnoreCaseAndUserEmail(name, email);
     }
+
+    //metodo para buscar toda la informacion de una lista especifica y devolverla.
+    public UserListWithContentsDTO getUserListDetail(Long listId, String email){
+        //Busco la lista solicitada del usuario logueado
+        UserList list = userListRepository.findByIdAndUserEmail(listId, email)
+                .orElseThrow( () -> new RuntimeException("Lista no encontrada o no pertenece al Usuario"));
+
+        //Buscamos los contenidos audiovisuales pertenecientes a la lista
+        List<UserListContent> userListContents = userListContentRepository.findByList(list);
+
+        //Genero el array de AudioVisualContentDTO de la lista solicitada
+        List<AudioVisualContentDTO> contents = userListContents.stream()
+                .map(ulc -> {
+                    AudioVisualContent content = ulc.getContent();
+                    return new AudioVisualContentDTO(
+                            content.getId(),
+                            content.getTitle(),
+                            content.getPosterPath(),
+                            content.getRating(),
+                            content.getType()
+                    );
+                }).toList();
+
+        //genero el objeto UserListWithContentDTO que le voy a devolver al front
+        return new UserListWithContentsDTO(
+                list.getId(),
+                list.getName(),
+                list.getDescription(),
+                list.isPublic(),
+                list.getCreationDate(),
+                contents
+        );
+    }
+
 }
