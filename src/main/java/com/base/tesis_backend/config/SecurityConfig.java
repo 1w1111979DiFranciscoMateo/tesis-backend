@@ -50,7 +50,9 @@ public class SecurityConfig {
                                 "/recommendations/**",
                                 "/users/profile",
                                 "/users/update",
-                                "/userLists/**"
+                                "/userLists/**",
+                                "/audioVisualContent/**",
+                                "/platforms/forContent"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

@@ -1,5 +1,6 @@
 package com.base.tesis_backend.controllers;
 
+import com.base.tesis_backend.Dtos.AddOrRemoveContentDTO;
 import com.base.tesis_backend.Dtos.UserListDTO;
 import com.base.tesis_backend.Dtos.UserListResponseDTO;
 import com.base.tesis_backend.Dtos.UserListWithContentsDTO;
@@ -62,6 +63,30 @@ public class UserListController {
 
         UserListWithContentsDTO dto = userListService.getUserListDetail(id, email);
         return ResponseEntity.ok(dto);
+    }
+
+    //endpoint para guardar/quitar un contenido audiovisual de una lista
+    @PostMapping("/toggleContent")
+    public ResponseEntity<Void> toggleContentInList(@RequestBody AddOrRemoveContentDTO dto, Authentication authentication) {
+        System.out.println("=== DEBUG TOGGLE CONTENT ===");
+        System.out.println("Authentication: " + authentication);
+        System.out.println("User email: " + (authentication != null ? authentication.getName() : "NULL"));
+        System.out.println("DTO: " + dto);
+        System.out.println("============================");
+        //extraemos el email del token
+        String email = authentication.getName();
+        userListService.toggleContentInList(dto, email);
+        return ResponseEntity.ok().build();
+    }
+
+    //endpoint para obtener las listas del usuario logueado que contienen un
+    //contenido audiovisual especifico
+    @GetMapping("/containing-content/{contentId}")
+    public ResponseEntity<List<Long>> getListsContainingContent(@PathVariable Long contentId, Authentication authentication) {
+        //extraemos el email del token
+        String email = authentication.getName();
+        List<Long> listIds = userListService.getListsContainingContent(contentId, email);
+        return ResponseEntity.ok(listIds);
     }
 
 }

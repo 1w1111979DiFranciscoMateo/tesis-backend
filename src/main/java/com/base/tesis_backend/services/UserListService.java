@@ -1,16 +1,15 @@
 package com.base.tesis_backend.services;
 
-import com.base.tesis_backend.Dtos.AudioVisualContentDTO;
-import com.base.tesis_backend.Dtos.UserListDTO;
-import com.base.tesis_backend.Dtos.UserListResponseDTO;
-import com.base.tesis_backend.Dtos.UserListWithContentsDTO;
+import com.base.tesis_backend.Dtos.*;
 import com.base.tesis_backend.entities.AudioVisualContent;
 import com.base.tesis_backend.entities.User;
 import com.base.tesis_backend.entities.UserList;
 import com.base.tesis_backend.entities.UserListContent;
+import com.base.tesis_backend.repositories.AudioVisualContentRepository;
 import com.base.tesis_backend.repositories.UserListContentRepository;
 import com.base.tesis_backend.repositories.UserListRepository;
 import com.base.tesis_backend.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,6 +32,8 @@ public class UserListService {
     private UserRepository userRepository;
     @Autowired
     private UserListContentRepository userListContentRepository;
+    @Autowired
+    private AudioVisualContentRepository audioVisualContentRepository;
 
     //metodo para generar las listas por defecto (Favoritos, Ver más tarde, Vistos)
     // cuando se registra un usuario nuevo
@@ -138,6 +139,70 @@ public class UserListService {
                 list.getCreationDate(),
                 contents
         );
+    }
+
+    //metodo para agregar o quitar el un contenido de una Lista (y para guardar el
+    // contenido en la base de datos)
+    @Transactional
+    public void toggleContentInList(AddOrRemoveContentDTO dto, String email){
+        //Valido que la lista pertenece al usuario logueado
+        UserList list = userListRepository.findByIdAndUserEmail(dto.getListId(), email)
+                .orElseThrow(() -> new RuntimeException("Lista no encontrada o no pertenece al usuario"));
+
+        //Buscamos si el contenido ya esta en la base de datos
+        AudioVisualContent content = audioVisualContentRepository.findById(dto.getContentId())
+                .orElseGet(() -> {
+                    //Si no existe lo creo y lo guardo
+                    AudioVisualContent newContent = new AudioVisualContent();
+                    newContent.setId(dto.getContentId());
+                    newContent.setTitle(dto.getTitle());
+                    newContent.setPosterPath(dto.getPosterPath());
+                    newContent.setRating(dto.getRating());
+                    newContent.setType(dto.getType());
+                    return audioVisualContentRepository.save(newContent);
+                });
+
+        //Verificamos si ya existe la relacion (si el contenido ya esta agregado a la lista)
+        Optional<UserListContent> existing = userListContentRepository.findByListAndContent(list, content);
+
+        if(existing.isPresent()){
+            //Si ya existe lo quito de la lista
+            userListContentRepository.delete(existing.get());
+        } else {
+            //Si no existe lo agrego
+            UserListContent relation = new UserListContent();
+            relation.setList(list);
+            relation.setContent(content);
+            userListContentRepository.save(relation);
+        }
+    }
+
+    //Metodo para obtener los IDs de las Listas que contienen un Contenido Audiovisual
+    //Especifico
+    public List<Long> getListsContainingContent(Long contentId, String email){
+        //Obtenemos todas las listas del usuario
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
+
+        //Busco el contenido audiovisual si existe
+        Optional<AudioVisualContent> contentOpt = audioVisualContentRepository.findById(contentId);
+
+        if(contentOpt.isEmpty()){
+            //Si el contenido no existe en nuestra Base de Datos, no esta en ninguna lista
+            return List.of();
+        }
+
+        AudioVisualContent content = contentOpt.get();
+
+        //Busco todas las relaciones UserListContent que contengan este contenido audiovisual
+        //y que las listas pertenezcan al usuario logueado
+        List<UserListContent> relations = userListContentRepository.findByContent(content);
+
+        //Filtro solo las listas que pertenezcan al usuario logueado y extraigo los IDs
+        return relations.stream()
+                .filter(relation -> relation.getList().getUser().equals(user))
+                .map(relation -> relation.getList().getId())
+                .collect(Collectors.toList());
     }
 
 }
