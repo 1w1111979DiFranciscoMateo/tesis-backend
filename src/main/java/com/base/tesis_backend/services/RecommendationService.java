@@ -110,7 +110,7 @@ public class RecommendationService {
         url.append("&include_adult=false"); //no contenido +18
         url.append("&include_video=false"); //no incuya video
         url.append("&sort_by=vote_average.desc"); //ordenado por rating descendiente
-        url.append("&vote_count.gte=1000"); //que el contenido tenga mas de 1000 votos
+        url.append("&vote_count.gte=500"); //que el contenido tenga mas de 1000 votos
         url.append("&page=" + page); //pagina
         url.append("&watch_region=AR");//region argentina
 

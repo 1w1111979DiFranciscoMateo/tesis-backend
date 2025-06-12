@@ -52,7 +52,8 @@ public class SecurityConfig {
                                 "/users/update",
                                 "/userLists/**",
                                 "/audioVisualContent/**",
-                                "/platforms/forContent"
+                                "/platforms/forContent",
+                                "/search/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )
