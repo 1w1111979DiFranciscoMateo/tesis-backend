@@ -44,7 +44,7 @@ public class UserListService {
             UserList list = new UserList();
             list.setUser(user);
             list.setName(name);
-            list.setDescription("Lista por defecto: " + name);
+            list.setDescription("Lista por defecto de " + name);
             list.setPublic(false);
             list.setCreationDate(LocalDateTime.now());
 
@@ -203,6 +203,73 @@ public class UserListService {
                 .filter(relation -> relation.getList().getUser().equals(user))
                 .map(relation -> relation.getList().getId())
                 .collect(Collectors.toList());
+    }
+
+    //Metodo para editar los valores base de una lista (nombre, descripcion, visibilidad)
+    //exceptuando las listas por defecto (Favoritos, Ver mas Tarde, Vistos)
+    public UserListDTO updateUserList(Long listId, String email, UserListResponseDTO request){
+        //busco la lista del usuario logueado
+        UserList list = userListRepository.findByIdAndUserEmail(listId, email)
+                .orElseThrow(() -> new RuntimeException("Lista no encontrado o no pertenece al usuario."));
+
+        //Verifico que no sea una lista por defecto
+        String[] defaultListNames = {"Favoritos", "Vistos", "Ver más Tarde"};
+        for(String defaultName : defaultListNames){
+            if(list.getName().equals(defaultName)){
+                System.out.println("COINCIDENCIA ENCONTRADA - Rechazando edición");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "No se pueden editar las listas por defecto");
+            }
+        }
+
+        //Verifico que el nuevo nombre no exista ya para este usuario (solo si cambió el nombre)
+        if(userListRepository.existsByNameAndUserAndIdNot(request.getName(), list.getUser(), listId)){
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Ya existe una lista con ese nombre");
+        }
+
+        //Actualizo los campos
+        list.setName(request.getName());
+        list.setDescription(request.getDescription());
+        list.setPublic(request.isPublic());
+
+        //Guardo los cambios
+        UserList updatedList = userListRepository.save(list);
+
+        //Devuelvo el DTO de la lista actualizado
+        return new UserListDTO(
+                updatedList.getId(),
+                updatedList.getName(),
+                updatedList.getDescription(),
+                updatedList.isPublic(),
+                updatedList.getCreationDate()
+        );
+    }
+
+    //metodo para eliminar una lista
+    //Exceptuando las listas por defecto (Favoritos, Vistos, Ver más Tarde)
+    @Transactional
+    public void deleteUserList(Long listId, String email){
+        //Busco la lista del usuario logueado
+        UserList list = userListRepository.findByIdAndUserEmail(listId, email)
+                .orElseThrow(() -> new RuntimeException("Lista no encontrada o no pertenece al usuario"));
+
+        //Verificamos que no sea un lista por defecto
+        String[] defaultListNames = {"Favoritos", "Vistos", "Ver más Tarde"};
+        for(String defaultName : defaultListNames){
+            if(list.getName().equals(defaultName)){
+                System.out.println("COINCIDENCIA ENCONTRADA - Rechazando edición");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "No se pueden editar las listas por defecto");
+            }
+        }
+
+        //Primero elimino todas las relaciones UserListContent de esta lista
+        //para evitar problemas de integridad referencial
+        userListContentRepository.deleteByList(list);
+
+        //Luego elimino la lista
+        userListRepository.delete(list);
     }
 
 }

@@ -21,4 +21,8 @@ public interface UserListRepository extends JpaRepository<UserList, Long> {
     //metodo para buscar una lista por id y por email del usuario, es para la pantalla
     //la pantalla del detalle de una lista
     Optional<UserList> findByIdAndUserEmail(Long id, String email);
+
+    //metodo para validar que no exista otra lista con el mismo nombre al editar
+    //excluye la lista actual de la validacion
+    boolean existsByNameAndUserAndIdNot(String name, User user, Long id);
 }

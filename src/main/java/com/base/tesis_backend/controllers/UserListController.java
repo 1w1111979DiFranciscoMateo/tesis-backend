@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -87,6 +88,44 @@ public class UserListController {
         String email = authentication.getName();
         List<Long> listIds = userListService.getListsContainingContent(contentId, email);
         return ResponseEntity.ok(listIds);
+    }
+
+    //endpoint para editar una lista existente (nombre, descripcion, visibilidad)
+    //no permite editar listas por defecto de Favoritos, Vistos, Ver mas Tarde
+    @PutMapping("/edit/{id}")
+    public ResponseEntity<UserListDTO> updateUserList(
+            @PathVariable Long id,
+            @RequestBody UserListResponseDTO request,
+            Authentication authentication){
+
+        //extraemos el email del token
+        String email = authentication.getName();
+
+        try {
+            UserListDTO updatedList = userListService.updateUserList(id, email, request);
+            return ResponseEntity.ok(updatedList);
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
+    }
+
+    //endpoint para eliminar una lista existente
+    //No permito eliminar las listas por defecto
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deleteUserList(@PathVariable Long id, Authentication authentication) {
+        //extraemos el email del token
+        String email = authentication.getName();
+
+        try {
+            userListService.deleteUserList(id, email);
+            return ResponseEntity.noContent().build();
+        } catch (ResponseStatusException e){
+            throw e;
+        } catch (RuntimeException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
     }
 
 }

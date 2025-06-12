@@ -3,6 +3,7 @@ package com.base.tesis_backend.repositories;
 import com.base.tesis_backend.entities.AudioVisualContent;
 import com.base.tesis_backend.entities.UserList;
 import com.base.tesis_backend.entities.UserListContent;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -18,4 +19,7 @@ public interface UserListContentRepository extends JpaRepository<UserListContent
     //metodo para encontrar todas las relaciones entre un contenido audiovisual
     //y cona lista del usuario logueado
     List<UserListContent> findByContent(AudioVisualContent content);
+    //metodo para eliminar las relaciones que existen entre una lista y su contenido
+    @Transactional
+    void deleteByList(UserList list);
 }
