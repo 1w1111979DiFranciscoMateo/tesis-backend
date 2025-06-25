@@ -1,5 +1,6 @@
 package com.base.tesis_backend.services;
 
+import com.base.tesis_backend.Dtos.AdminDTOs.UserSummaryDTO;
 import com.base.tesis_backend.Dtos.UpdateUserDTO;
 import com.base.tesis_backend.Dtos.UserProfileDTO;
 import com.base.tesis_backend.config.JwtUtil;
@@ -11,7 +12,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -88,4 +91,46 @@ public class UserService {
         userRepository.save(user);
 
     }
+
+    //-------------------------------------------------------
+    //A PARTIR DE ACA EMPIEZA LA LOGICA PARA EL USER ADMIN---
+    //-------------------------------------------------------
+
+    //metodo para obtener el total de usuarios que tiene la pagina
+    public long  countTotalUsers(){
+        return userRepository.count();
+    }
+
+    //metodo para obtener una lista de todos los usuarios de la pagina con algunos datos
+    public List<UserSummaryDTO> getAllUserSumaries(){
+        return userRepository.findAll()
+                .stream()
+                .map(user -> new UserSummaryDTO(user.getId(), user.getRealUsername(), user.getEmail(), user.getCreationDate()))
+                .toList();
+    }
+
+    //metodo para saber el porcentaje de usuarios que interactuan con un
+    //contenido audiovisual (usuarios con comentarios o puntuaciones)
+    public double getPercentageOfUsersWithCommentsOrRatings(){
+        long totalUsers = userRepository.count();
+        long activeUsers = userRepository.countUsersWithCommentsOrRatings();
+        return totalUsers == 0 ? 0.0 : (double) activeUsers * 100 / totalUsers;
+    }
+
+    //metodo para obtener el total de usuarios nuevos en las ultimas 2 semanas
+    public long countUsersCreatedInLastTwoWeeks(){
+        LocalDateTime twoWeeksAgo = LocalDateTime.now().minusWeeks(2);
+        return userRepository.countByCreationDateAfter(twoWeeksAgo);
+    }
+
+    //metodo para saber las categorias mas populares entre los usuarios
+    public Map<String, Long> getMostPopularCategories(){
+        return userCategoryService.countUsersByCategory();
+    }
+
+    //metodo para saber las plataformas mas populares entre los usuarios
+    public Map<String, Long> getMostPopularPlatforms(){
+        return userPlatformService.countUsersByPlatform();
+    }
+
 }

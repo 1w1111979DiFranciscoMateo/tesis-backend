@@ -1,6 +1,7 @@
 package com.base.tesis_backend.services;
 
 import com.base.tesis_backend.Dtos.*;
+import com.base.tesis_backend.Dtos.AdminDTOs.ListStatisticsFullDTO;
 import com.base.tesis_backend.entities.AudioVisualContent;
 import com.base.tesis_backend.entities.User;
 import com.base.tesis_backend.entities.UserList;
@@ -18,8 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -271,5 +271,74 @@ public class UserListService {
         //Luego elimino la lista
         userListRepository.delete(list);
     }
+
+    //*****************************************************************
+    //Aca comienzan los metodos para hacer Las Estadisticas de Listas
+    //*****************************************************************
+
+    //metodo para devolverle al front todas las estadisticas necesarias
+    //para la pagina de Estadisticas de Listas
+    public ListStatisticsFullDTO getCompleteListStatistics(){
+        List<User> allUsers = userRepository.findAll();
+        List<UserList> allLists = userListRepository.findAll();
+        List<UserListContent> allListContents = userListContentRepository.findAll();
+
+        // === KPI 1: % de usuarios con más de 3 listas ===
+        Map<Long, Long> listsPerUser = allLists.stream()
+                .collect(Collectors.groupingBy(l -> l.getUser().getId(), Collectors.counting()));
+
+        long usersWithMoreThan3Lists = listsPerUser.values().stream().filter(count -> count > 3).count();
+        long usersWithAtLeast1List = listsPerUser.size();
+
+        double percentage = usersWithAtLeast1List == 0 ? 0.0 : ((double) usersWithMoreThan3Lists / usersWithAtLeast1List) * 100;
+
+        // === KPI 2: promedio de contenidos por lista ===
+        double avgContent = allLists.isEmpty() ? 0.0 : ((double) allListContents.size() / allLists.size());
+
+        // === KPI 3: promedio de listas personalizadas por usuarios ===
+        Map<Long, Long> listCountPerUser = allLists.stream()
+                .collect(Collectors.groupingBy(l -> l.getUser().getId(), Collectors.counting()));
+
+        long usersWithLists = listCountPerUser.size();
+
+        long totalCustomLists = allLists.stream()
+                .filter(l -> !List.of("Favoritos", "Ver más Tarde", "Vistos").contains(l.getName()))
+                .count();
+
+        double averageCustomListsPerUser = usersWithLists == 0 ? 0.0 : (double) totalCustomLists / usersWithLists;
+
+        // === Gráfico 1: ranking de listas por defecto ===
+        String[] defaultNames = {"Favoritos", "Ver más Tarde", "Vistos"};
+        Map<String, Long> defaultRanking = Arrays.stream(defaultNames)
+                .collect(Collectors.toMap(name -> name, name -> {
+                    return allListContents.stream()
+                            .filter(ulc -> ulc.getList().getName().equals(name))
+                            .count();
+                }));
+
+        // === Gráfico 2: distribución por cantidad de contenido ===
+        Map<String, Long> sizeDistribution = new HashMap<>();
+        sizeDistribution.put("0", 0L);
+        sizeDistribution.put("1-5", 0L);
+        sizeDistribution.put("6-10", 0L);
+        sizeDistribution.put("11-20", 0L);
+        sizeDistribution.put("+20", 0L);
+
+        Map<Long, Long> contentCountPerList = allListContents.stream()
+                .collect(Collectors.groupingBy(c -> c.getList().getId(), Collectors.counting()));
+
+        for (UserList list : allLists){
+            long count = contentCountPerList.getOrDefault(list.getId(), 0L);
+
+            if (count == 0) sizeDistribution.put("0", sizeDistribution.get("0") + 1);
+            else if (count <= 5) sizeDistribution.put("1-5", sizeDistribution.get("1-5") + 1);
+            else if (count <= 10) sizeDistribution.put("6-10", sizeDistribution.get("6-10") + 1);
+            else if (count <= 20) sizeDistribution.put("11-20", sizeDistribution.get("11-20") + 1);
+            else sizeDistribution.put("+20", sizeDistribution.get("+20") + 1);
+        }
+
+        return new ListStatisticsFullDTO(percentage, avgContent, averageCustomListsPerUser, defaultRanking, sizeDistribution);
+    }
+
 
 }

@@ -21,4 +21,9 @@ public interface UserPlatformRepository extends JpaRepository<UserPlatform, Long
 
     //este metodo es para eliminar las plataformas de un usuario (para el editar perfil)
     void deleteByUser(User user);
+
+    //metodo para saber cuales son las plataformas mas usadas por los usuarios
+    //es para el Admin
+    @Query("SELECT up.platform.name, COUNT(up.user.id) FROM UserPlatform up GROUP BY up.platform.name ORDER BY COUNT(up.user.id) DESC")
+    List<Object[]> countUsersByPlatformName();
 }

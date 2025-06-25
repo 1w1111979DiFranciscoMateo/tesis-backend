@@ -22,4 +22,9 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory, Long
 
     //este metodo es para eliminar las categorias de un usuario (para el editar perfil)
     void deleteByUser(User user);
+
+    //metodo para saber cuandos usuarios tienen cada categoria como favorita
+    //es para el Admin
+    @Query("SELECT uc.category.name, COUNT(uc.user.id) FROM UserCategory uc GROUP BY uc.category.name ORDER BY COUNT(uc.user.id) DESC")
+    List<Object[]> countUsersByCategoryName();
 }

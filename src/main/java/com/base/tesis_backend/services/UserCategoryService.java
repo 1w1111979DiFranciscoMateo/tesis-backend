@@ -7,7 +7,9 @@ import com.base.tesis_backend.repositories.UserCategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 //Esto es un Service, aca va la logica de la aplicacion (especificamente la
@@ -55,4 +57,23 @@ public class UserCategoryService {
                 }).toList();
         userCategoryRepository.saveAll(newAssociations);
     }
+
+    //-------------------------------------------------------
+    //A PARTIR DE ACA EMPIEZA LA LOGICA PARA EL USER ADMIN---
+    //-------------------------------------------------------
+
+    //metodo para saber cuantos usuarios tienen como favoritos cada categoria / genero
+    public Map<String, Long> countUsersByCategory(){
+        List<Object[]> results = userCategoryRepository.countUsersByCategoryName();
+        Map<String, Long> categoryCountMap = new LinkedHashMap<>();
+
+        for(Object[] row : results){
+            String categoryName = (String) row[0];
+            Long count = (Long) row[1];
+            categoryCountMap.put(categoryName, count);
+        }
+
+        return categoryCountMap;
+    }
+
 }

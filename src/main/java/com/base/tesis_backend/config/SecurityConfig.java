@@ -53,7 +53,10 @@ public class SecurityConfig {
                                 "/userLists/**",
                                 "/audioVisualContent/**",
                                 "/platforms/forContent",
-                                "/search/**"
+                                "/search/**",
+                                "/rating/**",
+                                "/comments/**",
+                                "/admin/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

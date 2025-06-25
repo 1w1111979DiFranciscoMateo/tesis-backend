@@ -8,7 +8,9 @@ import com.base.tesis_backend.repositories.UserPlatformRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,5 +55,24 @@ public class UserPlatformService {
                     return up;
                 }).toList();
         userPlatformRepository.saveAll(newAssociations);
+    }
+
+    //-------------------------------------------------------
+    //A PARTIR DE ACA EMPIEZA LA LOGICA PARA EL USER ADMIN---
+    //-------------------------------------------------------
+
+    //metodo para saber cuantos usuarios tienen como disponible cada plataforma
+    //es para el admin
+    public Map<String, Long> countUsersByPlatform(){
+        List<Object[]> results = userPlatformRepository.countUsersByPlatformName();
+        Map<String, Long> platformMapCount = new LinkedHashMap<>();
+
+        for(Object[] row : results){
+            String platformName = (String) row[0];
+            Long count = (Long) row[1];
+            platformMapCount.put(platformName, count);
+        }
+
+        return platformMapCount;
     }
 }
