@@ -56,7 +56,8 @@ public class SecurityConfig {
                                 "/search/**",
                                 "/rating/**",
                                 "/comments/**",
-                                "/admin/**"
+                                "/admin/**",
+                                "/commentsReactions/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

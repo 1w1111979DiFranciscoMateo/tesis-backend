@@ -181,4 +181,22 @@ public class RecommendationService {
             throw new RuntimeException("Error parsin TMDB response",e);
         }
     }
+
+    //metodo para obtener las Tendencias
+    public List<RecommendationDTO> getTrendingContent(String mediaType){
+        try {
+            String url = "https://api.themoviedb.org/3/trending/" + mediaType + "/week?language=es-AR";
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    getEntityWithHeaders(),
+                    String.class
+            );
+
+            return parseRecommendationsFromJson(response.getBody(), mediaType);
+        } catch (Exception e){
+            throw new RuntimeException("Error al buscar los Contenidos en Tendencia",e);
+        }
+    }
 }

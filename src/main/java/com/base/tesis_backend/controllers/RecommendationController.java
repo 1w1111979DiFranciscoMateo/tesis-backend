@@ -35,4 +35,18 @@ public class RecommendationController {
         List<RecommendationDTO> recommendations = recommendationService.getRecommendationsForUser(email, filterByPlataforms, page);
         return ResponseEntity.ok(recommendations);
     }
+
+    //endpoint para buscar las Peliculas en Tendencia
+    @GetMapping("/trending/movies")
+    public ResponseEntity<List<RecommendationDTO>> getTrendingMovies(){
+        List<RecommendationDTO> trendingMovies = recommendationService.getTrendingContent("movie");
+        return ResponseEntity.ok(trendingMovies);
+    }
+
+    //endpoint para buscar los TV Shows en Tendencia
+    @GetMapping("/trending/tv")
+    public ResponseEntity<List<RecommendationDTO>> getTrendingTVShows(){
+        List<RecommendationDTO> trendingTVShows = recommendationService.getTrendingContent("tv");
+        return ResponseEntity.ok(trendingTVShows);
+    }
 }
